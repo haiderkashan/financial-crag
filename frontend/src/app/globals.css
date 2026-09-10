@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
+@theme {
+  --color-parchment: #F7F7F5;
+  --color-parchment-subtle: #EFEFEA;
+  --color-dark: #111111;
+  --color-dark-surface: #1A1A1A;
+  --color-mustard: #E5A823;
+  --color-mustard-hover: #D49718;
+  --color-border-dark: #1A1A1A;
+  --color-border-light: #DCDCD7;
+
+  --font-serif: var(--font-serif), "Newsreader", "EB Garamond", Georgia, serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
+  --font-sans: var(--font-sans), "Geist", "Space Grotesk", sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #F7F7F5;
+  --foreground: #111111;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Strict Design Rule: Zero border radius (brutalist square edges) */
+*,
+*::before,
+*::after {
+  border-radius: 0px !important;
+}
+
+/* Selection colors */
+::selection {
+  background-color: #E5A823;
+  color: #000000;
 }
