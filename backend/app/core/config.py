@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     # Supabase (Database & pgvector)
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
+    SUPABASE_SERVICE_KEY: str = ""
+
+    @property
+    def effective_supabase_key(self) -> str:
+        """Returns the service key or service role key provided in environment."""
+        return self.SUPABASE_SERVICE_KEY or self.SUPABASE_SERVICE_ROLE_KEY
 
     # SMTP Configuration
     SMTP_HOST: str = ""
@@ -54,7 +60,7 @@ class Settings(BaseSettings):
         return ["http://localhost:3000"]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[".env", "backend/.env"],
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=True,
