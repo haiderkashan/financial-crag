@@ -19,7 +19,7 @@ This application is a production-grade AI financial analyst tool designed to ass
 
 ## 4. Key Features
 
-- **User Authentication:** Secure access via Clerk.
+- **Custom User Authentication:** Bespoke passwordless / email-verified auth system utilizing transactional SMTP (for magic links & verification codes), cryptographic JWT tokens (access and refresh pairs), and Supabase PostgreSQL for user state and token revocation—eliminating vendor lock-in and proving deep backend security competence.
 - **Chat Interface:** A highly customized, typographic-first chat UI.
 - **Thought Inspection Panel:** A dedicated UI section exposing the agent's internal state machine (e.g., "Evaluating Context -> Irrelevant -> Triggering Web Search -> Executing Math").
 - **Persistent History:** User sessions and chat histories saved securely in Supabase.

@@ -2,10 +2,10 @@
 
 **Rule for AI:** Do not proceed to the next phase until the current phase is fully complete, tested, and approved by the user.
 
-- **Phase 1: Foundation & Auth**
+- **Phase 1: Foundation & Custom Auth**
   - Scaffold Next.js (frontend) and FastAPI (backend).
-  - Integrate Clerk authentication on the frontend.
-  - Setup Supabase database connection.
+  - Build custom SMTP & JWT authentication system.
+  - Setup Supabase database connection and user/session schema.
 - **Phase 2: Data Ingestion Pipeline (Backend)**
   - Create the script to download 10-K filings.
   - Process PDFs through LlamaParse.

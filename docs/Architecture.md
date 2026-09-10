@@ -3,7 +3,7 @@
 ## 1. High-Level Stack
 
 - **Frontend:** Next.js (React), styled with custom CSS/Tailwind (adhering strictly to Design.md). Hosted on Vercel.
-- **Auth:** Clerk.
+- **Auth:** Custom SMTP & JWT Authentication (FastAPI security, passwordless magic links/OTP via SMTP, secure sessions & token revocation stored in Supabase PostgreSQL).
 - **Backend (API & AI):** Python FastAPI.
 - **Database & Vector Store:** Supabase (PostgreSQL with `pgvector` extension).
 - **AI Orchestration:** LangGraph (Python).
@@ -12,8 +12,8 @@
 
 ## 2. Decoupled Flow
 
-1. **Client:** User sends a query via the Next.js UI.
-2. **Gateway:** Next.js API routes validate the user via Clerk and forward the request to the FastAPI backend.
+1. **Client:** User sends a query or logs in via the Next.js UI.
+2. **Gateway / Auth:** Next.js communicates with FastAPI for custom SMTP passwordless magic-link verification and receives cryptographically signed JWTs (HTTP-only cookies / Bearer headers). Protected requests are verified against FastAPI auth dependencies and Supabase user state.
 3. **Agent (LangGraph):**
    - Embeds the query and searches Supabase `pgvector`.
    - Grades the chunks.
