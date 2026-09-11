@@ -25,6 +25,20 @@ class ChunkCreate(ChunkBase):
         description="Dense 384-dimensional vector embedding from BAAI/bge-small-en-v1.5",
     )
 
+    @field_validator("embedding", mode="before")
+    @classmethod
+    def parse_pgvector_string(cls, v: Any) -> Any:
+        """Parse string/JSON representation of pgvector if provided as a string."""
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    return [float(x.strip()) for x in v[1:-1].split(",") if x.strip()]
+        return v
+
     @field_validator("embedding")
     @classmethod
     def validate_embedding_dimension(cls, v: list[float]) -> list[float]:
@@ -44,6 +58,30 @@ class ChunkInDB(ChunkBase):
     id: UUID = Field(..., description="Unique chunk UUID")
     embedding: list[float] = Field(..., description="384-dimensional vector embedding")
     created_at: datetime = Field(..., description="Chunk creation timestamp")
+
+    @field_validator("embedding", mode="before")
+    @classmethod
+    def parse_pgvector_string(cls, v: Any) -> Any:
+        """Parse string representation of pgvector returned by Supabase PostgREST."""
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    return [float(x.strip()) for x in v[1:-1].split(",") if x.strip()]
+        return v
+
+    @field_validator("embedding")
+    @classmethod
+    def validate_embedding_dimension(cls, v: list[float]) -> list[float]:
+        """Strictly enforce the 384-dimensional requirement of BAAI/bge-small-en-v1.5."""
+        if len(v) != 384:
+            raise ValueError(
+                f"Embedding dimension mismatch: expected 384 dimensions, got {len(v)}"
+            )
+        return v
 
 
 class ChunkResponse(ChunkBase):
@@ -81,7 +119,7 @@ class ChunkSearchQuery(BaseModel):
     )
     match_threshold: float = Field(default=0.0, ge=-1.0, le=1.0, description="Minimum similarity cutoff")
     match_count: int = Field(default=10, ge=1, le=100, description="Maximum chunks to retrieve")
-    filter_ticker: str | None = Field(default=None, max_length=10, description="Filter by stock ticker")
+    filter_ticker: str | None = Field(default=None, max_length=20, description="Filter by stock ticker")
     filter_fiscal_year: int | None = Field(default=None, ge=1900, le=2100, description="Filter by fiscal year")
 
     @field_validator("query_embedding")
