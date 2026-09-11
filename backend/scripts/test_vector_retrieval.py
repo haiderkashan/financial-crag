@@ -7,6 +7,10 @@ Usage:
     python backend/scripts/test_vector_retrieval.py
 """
 import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 # Ensure proper encoding on Windows consoles
 if hasattr(sys.stdout, "reconfigure"):
