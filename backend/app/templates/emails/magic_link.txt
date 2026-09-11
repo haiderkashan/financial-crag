@@ -1,0 +1,28 @@
+================================================================================
+FINANCIAL SEC DUE-DILIGENCE CRAG TERMINAL // SECURE AUTHENTICATION
+================================================================================
+
+CONFIDENTIAL TRANSACTIONAL DISPATCH
+Date: Real-Time Verification
+Recipient: {{ email }}
+
+A secure sign-in request was initiated to access the Financial SEC
+Due-Diligence CRAG Intelligence Terminal.
+
+Click or paste the single-use authorization URL below into your browser:
+
+[AUTHENTICATE SESSION]
+{{ verify_url }}
+
+--------------------------------------------------------------------------------
+BACKUP VERIFICATION IDENTIFIER: {{ backup_code }}
+--------------------------------------------------------------------------------
+
+SECURITY NOTICE:
+This single-use cryptographic token expires in {{ expire_minutes }} minutes.
+If you did not initiate this request, disregard this transmission.
+No credentials have been compromised.
+
+================================================================================
+FINANCIAL SEC DUE-DILIGENCE CRAG PROTOCOL // ZERO-KNOWLEDGE AUTH (C) 2026
+================================================================================

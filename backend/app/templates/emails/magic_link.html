@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analyst Authentication Dispatch</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F7F7F5; font-family: Georgia, 'Times New Roman', Times, serif; color: #111111; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F7F7F5; padding: 40px 10px;">
+    <tr>
+      <td align="center">
+        <!-- Main Dispatch Container -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border: 1px solid #111111; border-radius: 0px;">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background-color: #111111; color: #F7F7F5; padding: 14px 24px; font-family: 'Courier New', Courier, monospace; font-size: 11px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid #111111; border-radius: 0px;">
+              SEC DUE-DILIGENCE CRAG TERMINAL // SECURE AUTHENTICATION
+            </td>
+          </tr>
+
+          <!-- Dispatch Body -->
+          <tr>
+            <td style="padding: 32px 28px; border-radius: 0px;">
+              <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #555555; margin-bottom: 12px; border-bottom: 1px solid #111111; padding-bottom: 6px;">
+                CONFIDENTIAL TRANSACTIONAL DISPATCH
+              </div>
+
+              <h1 style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px; margin: 0 0 20px 0; color: #111111; line-height: 1.2;">
+                Analyst Access Verification
+              </h1>
+
+              <p style="font-size: 16px; line-height: 1.6; color: #222222; margin: 0 0 24px 0;">
+                A secure sign-in request was initiated for <strong>{{ email }}</strong> to access the Financial SEC Due-Diligence CRAG Intelligence Terminal.
+              </p>
+
+              <!-- Action Button Box -->
+              <div style="margin: 28px 0; text-align: left;">
+                <a href="{{ verify_url }}" target="_blank" style="display: inline-block; background-color: #111111; color: #FFFFFF; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-decoration: none; padding: 14px 24px; border: 1px solid #111111; border-radius: 0px; text-transform: uppercase; letter-spacing: 1px;">
+                  [ -&gt; Authenticate Session ]
+                </a>
+              </div>
+
+              <!-- Backup Verification Code Panel -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F7F7F5; border: 1px solid #111111; margin: 24px 0 20px 0; border-radius: 0px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #666666; text-transform: uppercase; margin-bottom: 6px;">
+                      BACKUP VERIFICATION IDENTIFIER
+                    </div>
+                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 20px; font-weight: bold; color: #111111; letter-spacing: 4px;">
+                      {{ backup_code }}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Expiration & Security Notice -->
+              <p style="font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #555555; line-height: 1.5; margin: 0 0 16px 0;">
+                SECURITY NOTICE: This single-use authorization token expires in {{ expire_minutes }} minutes. If you did not initiate this request, disregard this transmission. No credentials have been compromised.
+              </p>
+
+              <!-- Raw Link Box -->
+              <div style="border-top: 1px solid #E0E0DC; padding-top: 16px; margin-top: 20px;">
+                <div style="font-family: 'Courier New', Courier, monospace; font-size: 10px; color: #777777; text-transform: uppercase; margin-bottom: 4px;">
+                  Raw Verification URL:
+                </div>
+                <div style="font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #111111; word-break: break-all; background-color: #F7F7F5; padding: 8px 10px; border: 1px solid #DCDCD7;">
+                  {{ verify_url }}
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F7F7F5; padding: 14px 24px; font-family: 'Courier New', Courier, monospace; font-size: 10px; color: #777777; border-top: 1px solid #111111; border-radius: 0px;">
+              FINANCIAL SEC DUE-DILIGENCE CRAG PROTOCOL // SEC-10K DEEP ANALYTICS &copy; 2026
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
