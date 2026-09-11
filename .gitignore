@@ -50,3 +50,7 @@ Thumbs.db
 docs/Memory.md
 docs/Study_Guide.md
 docs/decision_log.md
+
+# Data & Document Filings Cache
+data/
+

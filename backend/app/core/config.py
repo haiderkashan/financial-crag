@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     SMTP_DEV_MODE: bool = True
 
+    # SEC EDGAR Configuration
+    SEC_EDGAR_USER_AGENT: str = "FinancialCRAG admin@example.com"
+    SEC_EDGAR_BASE_URL: str = "https://data.sec.gov"
+    SEC_EDGAR_RATE_LIMIT_RPS: int = 8
+    DATA_DIR: str = "data/filings"
+
     # CORS & Frontend Origins
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_CORS_ORIGINS: Union[List[str], str] = [
