@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Newsreader, JetBrains_Mono, Geist } from "next/font/google";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -34,7 +35,7 @@ export default function RootLayout({
       className={`${newsreader.variable} ${jetbrainsMono.variable} ${geistSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-serif bg-[#F7F7F5] text-[#111111]">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
