@@ -33,8 +33,8 @@ def find_filing_file(ticker: str = "AAPL", data_dir: Path | str | None = None) -
         return None
 
     # Search accession directories for primary document (.htm, .html, .pdf)
-    for ext in ["*.htm", "*.html", "*.pdf"]:
-        matches = list(root.glob(f"*/*{ext}"))
+    for pattern in ["*/*.htm", "*/*.html", "*/*.pdf"]:
+        matches = list(root.glob(pattern))
         if matches:
             # Filter out parsed.md
             valid = [m for m in matches if m.name != "parsed.md"]
