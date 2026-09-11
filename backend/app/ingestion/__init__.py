@@ -2,6 +2,7 @@
 from backend.app.ingestion.chunker import FinancialDocumentChunker, chunker
 from backend.app.ingestion.embedder import DocumentEmbedder, embedder
 from backend.app.ingestion.parser import SECDocumentParser
+from backend.app.ingestion.pipeline import IngestionPipeline, pipeline
 from backend.app.ingestion.sec_client import SECEdgarClient, SECFilingInfo
 
 __all__ = [
@@ -12,4 +13,6 @@ __all__ = [
     "chunker",
     "DocumentEmbedder",
     "embedder",
+    "IngestionPipeline",
+    "pipeline",
 ]
