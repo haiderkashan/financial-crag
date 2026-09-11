@@ -41,7 +41,7 @@ class SECDocumentParser:
         num_workers: Optional[int] = None,
         parsing_instruction: Optional[str] = None,
     ) -> None:
-        self.api_key = api_key or settings.LLAMA_CLOUD_API_KEY
+        self.api_key = api_key if api_key is not None else settings.LLAMA_CLOUD_API_KEY
         self.result_type = result_type or settings.LLAMA_PARSE_RESULT_TYPE
         self.num_workers = num_workers or settings.LLAMA_PARSE_NUM_WORKERS
         self.parsing_instruction = parsing_instruction or DEFAULT_SEC_PARSING_INSTRUCTION
