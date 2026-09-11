@@ -21,7 +21,7 @@ class ChunkCreate(ChunkBase):
     """Payload for creating and inserting a new document chunk with embedding."""
 
     embedding: list[float] = Field(
-        ...,
+        default_factory=list,
         description="Dense 384-dimensional vector embedding from BAAI/bge-small-en-v1.5",
     )
 
@@ -42,8 +42,8 @@ class ChunkCreate(ChunkBase):
     @field_validator("embedding")
     @classmethod
     def validate_embedding_dimension(cls, v: list[float]) -> list[float]:
-        """Strictly enforce the 384-dimensional requirement of BAAI/bge-small-en-v1.5."""
-        if len(v) != 384:
+        """Strictly enforce the 384-dimensional requirement of BAAI/bge-small-en-v1.5 when populated."""
+        if v and len(v) != 384:
             raise ValueError(
                 f"Embedding dimension mismatch: expected 384 dimensions, got {len(v)}"
             )
