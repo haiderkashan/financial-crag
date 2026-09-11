@@ -49,7 +49,7 @@ def run_database_verification() -> bool:
         return False
 
     # 3. Test User Creation & Retrieval
-    test_email = f"test_analyst_{uuid4().hex[:8]}@financialcrag.local"
+    test_email = f"test_analyst_{uuid4().hex[:8]}@example.com"
     created_user: UserInDB | None = None
     created_token: TokenInDB | None = None
 

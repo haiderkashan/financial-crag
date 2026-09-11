@@ -16,7 +16,7 @@ def test_supabase_user_and_token_lifecycle():
     from backend.app.db.repositories.user_repo import user_repo
     from backend.app.db.repositories.token_repo import token_repo
 
-    test_email = f"pytest_{uuid4().hex[:8]}@financialcrag.local"
+    test_email = f"pytest_{uuid4().hex[:8]}@example.com"
     user = user_repo.create_user(UserCreate(email=test_email))
     assert user.email == test_email.lower()
 

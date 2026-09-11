@@ -59,3 +59,8 @@ ALTER TABLE public.auth_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Note: The FastAPI backend connects via the Supabase Service Role Key,
 -- which bypasses RLS by default. Explicit policies can be layered as needed.
+
+-- 6. Grant Table Permissions to service_role
+GRANT ALL ON TABLE public.users TO service_role;
+GRANT ALL ON TABLE public.auth_tokens TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
