@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     SEC_EDGAR_RATE_LIMIT_RPS: int = 8
     DATA_DIR: str = "data/filings"
 
+    # LlamaParse Configuration
+    LLAMA_CLOUD_API_KEY: str = ""
+    LLAMA_PARSE_RESULT_TYPE: str = "markdown"
+    LLAMA_PARSE_NUM_WORKERS: int = 4
+
     # CORS & Frontend Origins
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_CORS_ORIGINS: Union[List[str], str] = [
