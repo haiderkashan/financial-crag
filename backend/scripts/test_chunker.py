@@ -15,6 +15,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Ensure UTF-8 output on Windows consoles
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from backend.app.core.config import settings
 from backend.app.ingestion.chunker import FinancialDocumentChunker
 from backend.app.models.chunk import ChunkCreate
