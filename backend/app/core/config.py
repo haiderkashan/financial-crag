@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     LLAMA_PARSE_RESULT_TYPE: str = "markdown"
     LLAMA_PARSE_NUM_WORKERS: int = 4
 
+    # Embedding Model Configuration (BAAI/bge-small-en-v1.5)
+    EMBEDDING_MODEL_NAME: str = "BAAI/bge-small-en-v1.5"
+    EMBEDDING_DIMENSION: int = 384
+    EMBEDDING_DEVICE: str = "cpu"
+    EMBEDDING_BATCH_SIZE: int = 32
+
     # CORS & Frontend Origins
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_CORS_ORIGINS: Union[List[str], str] = [
