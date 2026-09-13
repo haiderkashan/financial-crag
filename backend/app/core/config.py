@@ -54,6 +54,24 @@ class Settings(BaseSettings):
     EMBEDDING_DEVICE: str = "cpu"
     EMBEDDING_BATCH_SIZE: int = 32
 
+    # LLM Provider Configuration
+    LLM_PROVIDER: str = "groq"
+    LLM_MODEL_NAME: str = "llama-3.3-70b-versatile"
+    LLM_TEMPERATURE: float = 0.0
+    GROQ_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    GOOGLE_API_KEY: str = ""
+
+    # Tavily Web Search Configuration
+    TAVILY_API_KEY: str = ""
+    TAVILY_MAX_RESULTS: int = 4
+    TAVILY_SEARCH_DEPTH: str = "advanced"
+
+    # CRAG Retrieval & Agent Configuration
+    CRAG_RETRIEVAL_TOP_K: int = 10
+    CRAG_SIMILARITY_THRESHOLD: float = 0.5
+    CRAG_MAX_REPL_TIMEOUT_SECONDS: int = 10
+
     # CORS & Frontend Origins
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_CORS_ORIGINS: Union[List[str], str] = [

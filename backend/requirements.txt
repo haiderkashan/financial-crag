@@ -16,4 +16,8 @@ llama-parse>=0.5.0
 langchain-text-splitters>=0.3.0
 sentence-transformers>=3.0.0
 numpy
+langgraph>=0.2.0
+langchain-core>=0.3.0
+langchain-groq>=0.2.0
+tavily-python>=0.5.0
 
