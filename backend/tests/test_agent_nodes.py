@@ -8,9 +8,12 @@ from backend.app.agent.nodes.grade import (
     _grade_single_chunk,
     grade_documents_node,
 )
+from backend.app.agent.nodes.query_transform import query_transform_node
 from backend.app.agent.nodes.retrieve import retrieve_node
+from backend.app.agent.nodes.web_search import route_after_grading, web_search_node
 from backend.app.agent.state import AgentState
 from backend.app.models.chunk import ChunkSearchResult
+from backend.app.tools.tavily_search import TavilySearchTool
 
 
 def _create_mock_chunk(
@@ -311,3 +314,253 @@ async def test_grade_single_chunk_fallback_on_exception():
     assert idx == 5
     assert grade.binary_score == "yes"
     assert "fallback" in grade.explanation.lower()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QUERY TRANSFORM NODE TESTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_query_transform_node_success():
+    """Verify query_transform_node reformulates query and strips quotes."""
+    mock_response = MagicMock()
+    mock_response.content = '"Apple AAPL FY 2023 total revenue SEC 10-K"'
+
+    mock_llm = MagicMock()
+    mock_llm.ainvoke = AsyncMock(return_value=mock_response)
+
+    with patch("backend.app.agent.nodes.query_transform.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "What was Apple's revenue?",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [],
+            "web_search_needed": True,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": False,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": ["[Grade] Done"],
+        }
+
+        result = await query_transform_node(state)
+
+        assert result["search_query"] == "Apple AAPL FY 2023 total revenue SEC 10-K"
+        assert len(result["steps"]) == 2
+        assert "[Query Transform] Reformulated: 'Apple AAPL FY 2023 total revenue SEC 10-K'" == result["steps"][1]
+
+
+@pytest.mark.asyncio
+async def test_query_transform_node_fallback_on_exception():
+    """Verify query_transform_node falls back cleanly on LLM exception."""
+    mock_llm = MagicMock()
+    mock_llm.ainvoke = AsyncMock(side_effect=RuntimeError("LLM service unavailable"))
+
+    with patch("backend.app.agent.nodes.query_transform.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "What was revenue?",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [],
+            "web_search_needed": True,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": False,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": [],
+        }
+
+        result = await query_transform_node(state)
+
+        assert "AAPL 2023 What was revenue?" in result["search_query"]
+        assert len(result["steps"]) == 1
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAVILY SEARCH TOOL TESTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_tavily_search_tool_formatting_with_answer():
+    """Verify TavilySearchTool properly formats answer and results into markdown."""
+    tool = TavilySearchTool(api_key="tvly-mock-key")
+
+    mock_client = MagicMock()
+    mock_client.search.return_value = {
+        "answer": "Apple reported $383.29 billion in revenue for FY 2023.",
+        "results": [
+            {
+                "title": "Apple Reports Fourth Quarter Results",
+                "url": "https://www.apple.com/newsroom/2023/11/apple-reports-fourth-quarter-results/",
+                "content": "Cupertino, California — Apple today announced financial results...",
+            },
+            {
+                "title": "SEC EDGAR Form 10-K Apple Inc.",
+                "url": "https://www.sec.gov/edgar/data/320193/aapl-202310k.htm",
+                "content": "Total net sales were $383,285 million for the year ended...",
+            },
+        ],
+    }
+    tool._client = mock_client
+
+    result = tool.search("AAPL FY 2023 revenue")
+
+    assert "**Web Summary:** Apple reported $383.29 billion in revenue for FY 2023." in result
+    assert "**Source:** Apple Reports Fourth Quarter Results (https://www.apple.com" in result
+    assert "**Source:** SEC EDGAR Form 10-K Apple Inc." in result
+    assert "\n\n---\n\n" in result
+
+
+def test_tavily_search_tool_formatting_no_answer():
+    """Verify TavilySearchTool formats properly when answer is absent."""
+    tool = TavilySearchTool(api_key="tvly-mock-key")
+
+    mock_client = MagicMock()
+    mock_client.search.return_value = {
+        "answer": None,
+        "results": [
+            {
+                "title": "Apple IR",
+                "url": "https://investor.apple.com",
+                "content": "Investor relations homepage.",
+            }
+        ],
+    }
+    tool._client = mock_client
+
+    result = tool.search("AAPL investor relations")
+
+    assert "**Web Summary:**" not in result
+    assert "**Source:** Apple IR (https://investor.apple.com)" in result
+
+
+def test_tavily_search_tool_empty_results():
+    """Verify TavilySearchTool returns fallback text when zero results are found."""
+    tool = TavilySearchTool(api_key="tvly-mock-key")
+
+    mock_client = MagicMock()
+    mock_client.search.return_value = {"results": []}
+    tool._client = mock_client
+
+    result = tool.search("unknown obscure metric")
+    assert result == "No relevant web results found."
+
+
+def test_tavily_search_tool_empty_query():
+    """Verify TavilySearchTool handles empty query."""
+    tool = TavilySearchTool(api_key="tvly-mock-key")
+    result = tool.search("   ")
+    assert result == "No search query provided."
+
+
+def test_tavily_search_tool_exception_handling():
+    """Verify TavilySearchTool handles API errors gracefully."""
+    tool = TavilySearchTool(api_key="tvly-mock-key")
+
+    mock_client = MagicMock()
+    mock_client.search.side_effect = RuntimeError("Rate limit exceeded")
+    tool._client = mock_client
+
+    result = tool.search("AAPL revenue")
+    assert "Web search failed: RuntimeError: Rate limit exceeded" in result
+
+
+def test_tavily_search_tool_missing_key_raises_error(monkeypatch):
+    """Verify TavilySearchTool raises ValueError when API key is missing."""
+    monkeypatch.setattr("backend.app.core.config.settings.TAVILY_API_KEY", "")
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+
+    tool = TavilySearchTool(api_key="")
+    with pytest.raises(ValueError, match="TAVILY_API_KEY is not configured"):
+        _ = tool.client
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WEB SEARCH NODE & ROUTER TESTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_web_search_node_success():
+    """Verify web_search_node executes search and attaches results to state."""
+    mock_formatted_result = (
+        "**Web Summary:** Apple FY 2023 revenue was $383.3B.\n\n---\n\n"
+        "**Source:** SEC EDGAR (https://sec.gov)\n10-K filing content"
+    )
+
+    with patch(
+        "backend.app.agent.nodes.web_search.tavily_tool.search",
+        return_value=mock_formatted_result,
+    ) as mock_search:
+        state: AgentState = {
+            "question": "What was Apple revenue?",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [],
+            "web_search_needed": True,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": "Apple AAPL FY 2023 revenue",
+            "math_needed": False,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": ["[Query Transform] Done"],
+        }
+
+        result = web_search_node(state)
+
+        mock_search.assert_called_once_with("Apple AAPL FY 2023 revenue")
+        assert result["web_results"] == mock_formatted_result
+        assert len(result["steps"]) == 2
+        assert "[Web Search] Executed web search for: 'Apple AAPL FY 2023 revenue'" == result["steps"][1]
+
+
+def test_route_after_grading():
+    """Verify route_after_grading returns correct branch based on web_search_needed."""
+    # When web search is needed -> route to query_transform
+    state_search_needed: AgentState = {
+        "question": "test",
+        "ticker": None,
+        "fiscal_year": None,
+        "documents": [],
+        "filtered_documents": [],
+        "web_search_needed": True,
+        "grade_explanations": [],
+        "web_results": None,
+        "search_query": None,
+        "math_needed": False,
+        "math_code": None,
+        "math_result": None,
+        "generation": None,
+        "steps": [],
+    }
+    assert route_after_grading(state_search_needed) == "query_transform"
+
+    # When web search is NOT needed -> route to tool_decision
+    state_no_search: AgentState = {
+        "question": "test",
+        "ticker": None,
+        "fiscal_year": None,
+        "documents": [],
+        "filtered_documents": [{"chunk_index": 0}],
+        "web_search_needed": False,
+        "grade_explanations": [],
+        "web_results": None,
+        "search_query": None,
+        "math_needed": False,
+        "math_code": None,
+        "math_result": None,
+        "generation": None,
+        "steps": [],
+    }
+    assert route_after_grading(state_no_search) == "tool_decision"
