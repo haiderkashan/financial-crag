@@ -8,8 +8,14 @@ from backend.app.agent.nodes.grade import (
     _grade_single_chunk,
     grade_documents_node,
 )
+from backend.app.agent.nodes.math_repl import (
+    clean_python_code,
+    math_repl_node,
+    route_after_tool_decision,
+)
 from backend.app.agent.nodes.query_transform import query_transform_node
 from backend.app.agent.nodes.retrieve import retrieve_node
+from backend.app.agent.nodes.tool_decision import ToolDecision, tool_decision_node
 from backend.app.agent.nodes.web_search import route_after_grading, web_search_node
 from backend.app.agent.state import AgentState
 from backend.app.models.chunk import ChunkSearchResult
@@ -564,3 +570,268 @@ def test_route_after_grading():
         "steps": [],
     }
     assert route_after_grading(state_no_search) == "tool_decision"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL DECISION NODE TESTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_tool_decision_node_math_needed():
+    """Verify tool_decision_node flags math queries requiring calculation."""
+    mock_decision = ToolDecision(
+        needs_math=True,
+        reasoning="Requires calculating year-over-year revenue growth percentage.",
+    )
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value.ainvoke = AsyncMock(
+        return_value=mock_decision
+    )
+
+    with patch("backend.app.agent.nodes.tool_decision.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "How much did Apple's revenue grow year over year?",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [
+                {"content": "2023 revenue: $383B, 2022 revenue: $394B."}
+            ],
+            "web_search_needed": False,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": False,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": ["[Grade] Done"],
+        }
+
+        result = await tool_decision_node(state)
+
+        assert result["math_needed"] is True
+        assert len(result["steps"]) == 2
+        assert "[Tool Decision] Math required — Requires calculating" in result["steps"][1]
+
+
+@pytest.mark.asyncio
+async def test_tool_decision_node_no_math():
+    """Verify tool_decision_node flags qualitative queries as not requiring math."""
+    mock_decision = ToolDecision(
+        needs_math=False,
+        reasoning="Qualitative question regarding company risk factors.",
+    )
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value.ainvoke = AsyncMock(
+        return_value=mock_decision
+    )
+
+    with patch("backend.app.agent.nodes.tool_decision.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "What are the primary operational risks?",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [
+                {"content": "Item 1A: Operational risk factors..."}
+            ],
+            "web_search_needed": False,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": False,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": [],
+        }
+
+        result = await tool_decision_node(state)
+
+        assert result["math_needed"] is False
+        assert "[Tool Decision] Math not required" in result["steps"][0]
+
+
+@pytest.mark.asyncio
+async def test_tool_decision_node_fallback_on_exception():
+    """Verify tool_decision_node falls back to False safely on evaluation error."""
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value.ainvoke = AsyncMock(
+        side_effect=RuntimeError("Groq service timeout")
+    )
+
+    with patch("backend.app.agent.nodes.tool_decision.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "Calculate margin",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [],
+            "web_search_needed": False,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": False,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": [],
+        }
+
+        result = await tool_decision_node(state)
+
+        assert result["math_needed"] is False
+        assert "Fallback to false" in result["steps"][0]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MATH REPL NODE & CLEANING TESTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_clean_python_code():
+    """CRITICAL FIX TEST: Verify markdown fences are stripped from code."""
+    # Standard ```python ... ```
+    raw1 = "```python\nrev = 383285\nprint(rev)\n```"
+    assert clean_python_code(raw1) == "rev = 383285\nprint(rev)"
+
+    # Generic ``` ... ```
+    raw2 = "```\nrev = 383285\nprint(rev)\n```"
+    assert clean_python_code(raw2) == "rev = 383285\nprint(rev)"
+
+    # Embedded in conversational response
+    raw3 = "Here is the calculation script:\n```python\nx = 10\nprint(x)\n```\nHope that helps!"
+    assert clean_python_code(raw3) == "x = 10\nprint(x)"
+
+    # Plain code without fences
+    raw4 = "rev = 100\nprint(rev)"
+    assert clean_python_code(raw4) == "rev = 100\nprint(rev)"
+
+
+@pytest.mark.asyncio
+async def test_math_repl_node_success():
+    """Verify math_repl_node generates code, executes in sandbox, and saves result."""
+    llm_output = (
+        "```python\n"
+        "rev_2023 = 383_285\n"
+        "rev_2022 = 394_328\n"
+        "growth = ((rev_2023 - rev_2022) / rev_2022) * 100\n"
+        'print(f"YoY Revenue Growth: {growth:.2f}%")\n'
+        "```"
+    )
+
+    mock_response = MagicMock()
+    mock_response.content = llm_output
+
+    mock_llm = MagicMock()
+    mock_llm.ainvoke = AsyncMock(return_value=mock_response)
+
+    with patch("backend.app.agent.nodes.math_repl.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "What was the YoY growth rate in revenue?",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [
+                {"content": "Total net sales: 2023: $383,285M, 2022: $394,328M."}
+            ],
+            "web_search_needed": False,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": True,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": ["[Tool Decision] Math needed"],
+        }
+
+        result = await math_repl_node(state)
+
+        # Verify code was cleaned of fences
+        assert "```" not in result["math_code"]
+        assert "rev_2023 = 383_285" in result["math_code"]
+
+        # Verify exact calculation executed in sandbox
+        assert "YoY Revenue Growth: -2.80%" in result["math_result"]
+
+        # Verify step log
+        assert len(result["steps"]) == 2
+        assert "[Math REPL] Executed Python script" in result["steps"][1]
+
+
+@pytest.mark.asyncio
+async def test_math_repl_node_handles_repl_error():
+    """Verify math_repl_node handles sandbox execution error without crashing."""
+    # Code that violates AST security
+    llm_output = "```python\nimport os\nprint(1)\n```"
+
+    mock_response = MagicMock()
+    mock_response.content = llm_output
+
+    mock_llm = MagicMock()
+    mock_llm.ainvoke = AsyncMock(return_value=mock_response)
+
+    with patch("backend.app.agent.nodes.math_repl.get_llm", return_value=mock_llm):
+        state: AgentState = {
+            "question": "Calculate something",
+            "ticker": "AAPL",
+            "fiscal_year": 2023,
+            "documents": [],
+            "filtered_documents": [],
+            "web_search_needed": False,
+            "grade_explanations": [],
+            "web_results": None,
+            "search_query": None,
+            "math_needed": True,
+            "math_code": None,
+            "math_result": None,
+            "generation": None,
+            "steps": [],
+        }
+
+        result = await math_repl_node(state)
+
+        assert "Execution Error: ValueError: Imports are forbidden" in result["math_result"]
+        assert len(result["steps"]) == 1
+
+
+def test_route_after_tool_decision():
+    """Verify route_after_tool_decision branches correctly based on math_needed."""
+    state_math: AgentState = {
+        "question": "test",
+        "ticker": None,
+        "fiscal_year": None,
+        "documents": [],
+        "filtered_documents": [],
+        "web_search_needed": False,
+        "grade_explanations": [],
+        "web_results": None,
+        "search_query": None,
+        "math_needed": True,
+        "math_code": None,
+        "math_result": None,
+        "generation": None,
+        "steps": [],
+    }
+    assert route_after_tool_decision(state_math) == "math_repl"
+
+    state_no_math: AgentState = {
+        "question": "test",
+        "ticker": None,
+        "fiscal_year": None,
+        "documents": [],
+        "filtered_documents": [],
+        "web_search_needed": False,
+        "grade_explanations": [],
+        "web_results": None,
+        "search_query": None,
+        "math_needed": False,
+        "math_code": None,
+        "math_result": None,
+        "generation": None,
+        "steps": [],
+    }
+    assert route_after_tool_decision(state_no_math) == "generate"
