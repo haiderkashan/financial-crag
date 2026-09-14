@@ -1,4 +1,9 @@
 from backend.app.agent.nodes.grade import GradeChunk, grade_documents_node
+from backend.app.agent.nodes.math_repl import (
+    clean_python_code,
+    math_repl_node,
+    route_after_tool_decision,
+)
 from backend.app.agent.nodes.query_transform import query_transform_node
 from backend.app.agent.nodes.retrieve import retrieve_node
 from backend.app.agent.nodes.tool_decision import ToolDecision, tool_decision_node
@@ -13,4 +18,7 @@ __all__ = [
     "route_after_grading",
     "tool_decision_node",
     "ToolDecision",
+    "math_repl_node",
+    "clean_python_code",
+    "route_after_tool_decision",
 ]
