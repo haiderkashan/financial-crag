@@ -1,3 +1,4 @@
+from backend.app.agent.nodes.generate import generate_node
 from backend.app.agent.nodes.grade import GradeChunk, grade_documents_node
 from backend.app.agent.nodes.math_repl import (
     clean_python_code,
@@ -21,4 +22,5 @@ __all__ = [
     "math_repl_node",
     "clean_python_code",
     "route_after_tool_decision",
+    "generate_node",
 ]
