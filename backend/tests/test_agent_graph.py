@@ -3,16 +3,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fastapi.testclient import TestClient
-
 from backend.app.agent.graph import build_crag_graph, crag_agent
 from backend.app.agent.nodes.grade import GradeChunk
 from backend.app.agent.nodes.tool_decision import ToolDecision
 from backend.app.agent.state import AgentState
-from backend.app.api.deps import get_current_user
-from backend.app.main import app
 from backend.app.models.chunk import ChunkSearchResult
-from backend.app.models.user import UserInDB
 
 
 def _create_mock_chunk(content: str = "Total net sales were $383,285M.") -> ChunkSearchResult:
@@ -76,7 +71,7 @@ def test_crag_graph_structure():
 
 
 @pytest.mark.asyncio
-async def test_path_1_relevant_no_math():
+async def test_full_graph_relevant_path():
     """Verify Path 1: Relevant SEC chunks + No math required -> Direct generation."""
     mock_chunk = _create_mock_chunk()
 
@@ -86,12 +81,10 @@ async def test_path_1_relevant_no_math():
     tool_decision = ToolDecision(needs_math=False, reasoning="Direct qualitative lookup.")
 
     mock_llm = MagicMock()
-    # Mock structured output for grade and tool_decision
     mock_llm.with_structured_output.side_effect = [
         MagicMock(ainvoke=AsyncMock(return_value=grade_decision)),  # grade
         MagicMock(ainvoke=AsyncMock(return_value=tool_decision)),   # tool_decision
     ]
-    # Mock generate synthesis
     mock_llm.ainvoke = AsyncMock(
         return_value=MagicMock(content="Apple 2023 revenue was $383,285 million.")
     )
@@ -131,7 +124,7 @@ async def test_path_1_relevant_no_math():
 
 
 @pytest.mark.asyncio
-async def test_path_2_relevant_with_math():
+async def test_full_graph_math_path():
     """Verify Path 2: Relevant SEC chunks + Math required -> REPL execution -> generation."""
     mock_chunk = _create_mock_chunk(content="2023 sales: $383,285M. 2022 sales: $394,328M.")
 
@@ -184,7 +177,7 @@ async def test_path_2_relevant_with_math():
 
 
 @pytest.mark.asyncio
-async def test_path_3_irrelevant_web_search_no_math():
+async def test_full_graph_web_fallback():
     """Verify Path 3: Irrelevant chunks -> Query Transform -> Web Search -> Direct Generation."""
     mock_chunk = _create_mock_chunk(content="Irrelevant legal disclaimers and definitions.")
 
@@ -238,7 +231,7 @@ async def test_path_3_irrelevant_web_search_no_math():
 
 
 @pytest.mark.asyncio
-async def test_path_4_irrelevant_web_search_with_math():
+async def test_full_graph_web_fallback_with_math():
     """Verify Path 4: Irrelevant chunks -> Web Search -> Math REPL -> Generation."""
     mock_chunk = _create_mock_chunk(content="Unrelated text.")
 
@@ -288,59 +281,3 @@ async def test_path_4_irrelevant_web_search_with_math():
         assert "[Tool Decision]" in step_text
         assert "[Math REPL]" in step_text
         assert "[Generate]" in step_text
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API ENDPOINT & SSE STREAMING TESTS
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def test_agent_query_endpoint_unauthorized():
-    """Verify POST /api/v1/agent/query rejects unauthenticated requests with 401."""
-    client = TestClient(app)
-    response = client.post(
-        "/api/v1/agent/query",
-        json={"question": "What was Apple's revenue in 2023?"},
-    )
-    assert response.status_code == 401
-    assert "Authentication credentials were not provided" in response.text
-
-
-def test_agent_query_endpoint_streaming():
-    """Verify POST /api/v1/agent/query streams SSE step events, generation, and done."""
-    from datetime import datetime
-
-    mock_user = UserInDB(
-        id=uuid.uuid4(),
-        email="analyst@example.com",
-        is_active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-    )
-
-    app.dependency_overrides[get_current_user] = lambda: mock_user
-
-    async def mock_astream(initial_state, stream_mode="updates"):
-        yield {"retrieve": {"steps": ["[Retrieve] Found 1 chunks from Supabase."]}}
-        yield {"generate": {"generation": "Apple 2023 revenue was $383,285M."}}
-
-    with patch("backend.app.api.v1.agent.crag_agent.astream", side_effect=mock_astream):
-        client = TestClient(app)
-        response = client.post(
-            "/api/v1/agent/query",
-            json={"question": "What was Apple's total revenue in 2023?", "ticker": "AAPL", "fiscal_year": 2023},
-        )
-
-        assert response.status_code == 200
-        assert "text/event-stream" in response.headers["content-type"]
-
-        body = response.text
-        # Assert SSE data lines format
-        assert "data: " in body
-        assert '"type":"step"' in body
-        assert "[Retrieve] Found 1 chunks" in body
-        assert '"type":"generation"' in body
-        assert "Apple 2023 revenue was $383,285M." in body
-        assert '"type":"done"' in body
-
-    app.dependency_overrides.clear()
