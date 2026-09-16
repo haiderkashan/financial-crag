@@ -56,7 +56,7 @@ async def tool_decision_node(state: AgentState) -> dict[str, Any]:
         f"Available Context (first 500 chars):\n{preview}"
     )
 
-    llm = get_llm(temperature=0.0)
+    llm = get_llm(temperature=0.0, max_tokens=250)
     decision_maker = llm.with_structured_output(ToolDecision)
 
     try:

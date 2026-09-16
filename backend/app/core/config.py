@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "groq"
     LLM_MODEL_NAME: str = "qwen/qwen3.8-27b"
     LLM_TEMPERATURE: float = 0.0
+    LLM_MAX_TOKENS: int = 800
     GROQ_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""

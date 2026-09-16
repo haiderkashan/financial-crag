@@ -32,7 +32,7 @@ async def query_transform_node(state: AgentState) -> dict[str, Any]:
         f"Fiscal Year: {fiscal_year}"
     )
 
-    llm = get_llm(temperature=0.0)
+    llm = get_llm(temperature=0.0, max_tokens=100)
 
     try:
         messages = [

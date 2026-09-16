@@ -83,7 +83,7 @@ async def grade_documents_node(state: AgentState) -> dict[str, Any]:
             + ["[Grade] No chunks available to grade. Web search triggered."],
         }
 
-    llm = get_llm(temperature=0.0)
+    llm = get_llm(temperature=0.0, max_tokens=250)
     grader = llm.with_structured_output(GradeChunk)
 
     # Concurrently evaluate all chunks

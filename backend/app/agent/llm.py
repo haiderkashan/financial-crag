@@ -10,6 +10,7 @@ def get_llm(
     model: str | None = None,
     provider: str | None = None,
     api_key: str | None = None,
+    max_tokens: int | None = None,
 ) -> BaseChatModel:
     """Factory function to initialize and return a configured BaseChatModel.
 
@@ -21,6 +22,7 @@ def get_llm(
         model: Optional model name override.
         provider: Optional provider name override ("groq", "openai").
         api_key: Optional API key override.
+        max_tokens: Optional token generation limit (default: settings.LLM_MAX_TOKENS).
 
     Returns:
         BaseChatModel: Configured LangChain chat model.
@@ -30,6 +32,7 @@ def get_llm(
     """
     effective_provider = (provider or settings.LLM_PROVIDER).lower()
     effective_model = model or settings.LLM_MODEL_NAME
+    effective_max_tokens = max_tokens if max_tokens is not None else settings.LLM_MAX_TOKENS
 
     if effective_provider == "groq":
         effective_key = api_key or settings.GROQ_API_KEY or os.environ.get("GROQ_API_KEY", "")
@@ -42,6 +45,7 @@ def get_llm(
             model_name=effective_model,
             groq_api_key=effective_key,
             temperature=temperature,
+            max_tokens=effective_max_tokens,
         )
 
     elif effective_provider == "openai":
@@ -63,6 +67,7 @@ def get_llm(
             model=effective_model,
             api_key=effective_key,
             temperature=temperature,
+            max_tokens=effective_max_tokens,
         )
 
     else:

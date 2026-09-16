@@ -17,7 +17,8 @@ RESPONSE RULES:
    - Use **bold** for key metrics
    - Use `code blocks` for specific values
 5. If the available data is insufficient to fully answer the question, explicitly state what information is missing rather than speculating.
-6. NEVER fabricate data. If a number is not in the context, explicitly say so."""
+6. NEVER fabricate data. If a number is not in the context, explicitly say so.
+7. Be direct, authoritative, and concise (under 400 words). Conclude cleanly without dangling sentences."""
 
 
 async def generate_node(state: AgentState) -> dict[str, Any]:
@@ -82,7 +83,7 @@ async def generate_node(state: AgentState) -> dict[str, Any]:
         f"Analyst Question: {question}"
     )
 
-    llm = get_llm(temperature=0.0)
+    llm = get_llm(temperature=0.0, max_tokens=800)
 
     try:
         messages = [

@@ -7,17 +7,18 @@ from backend.app.agent.llm import get_llm
 from backend.app.agent.state import AgentState
 from backend.app.tools.python_repl import execute_sandboxed_python
 
-MATH_GENERATION_SYSTEM_PROMPT = """You are a financial calculation engine. Given the analyst's question and the financial context, write a self-contained Python script that performs the exact arithmetic required.
+MATH_GENERATION_SYSTEM_PROMPT = """You are a financial calculation engine. Given the analyst's question and the financial context, write a concise, self-contained Python script that performs the exact arithmetic required.
 
 RULES:
 1. Extract exact numbers from the provided financial context.
-2. Use only standard Python arithmetic (+, -, *, /, **, %).
-3. The `math` module is pre-loaded (math.log, math.sqrt, etc.). DO NOT write `import math`.
-4. DO NOT import any modules (all imports are strictly forbidden).
-5. Always use print() to output the calculated results with clear descriptive labels.
-6. Format currency with commas: print(f"YoY Revenue Change: ${change:,.2f} million")
-7. Format percentages to 2 decimal places: print(f"YoY Growth Rate: {rate:.2f}%")
-8. Return ONLY executable Python code."""
+2. Output ONLY executable Python code (enclosed in ```python ... ```). DO NOT write any conversational commentary, explanations, or prose.
+3. Use only standard Python arithmetic (+, -, *, /, **, %).
+4. The `math` module is pre-loaded (math.log, math.sqrt, etc.). DO NOT write `import math`.
+5. DO NOT import any modules (all imports are strictly forbidden).
+6. Always use print() to output the calculated results with clear descriptive labels.
+7. Format currency with commas: print(f"YoY Revenue Change: ${change:,.2f} million")
+8. Format percentages to 2 decimal places: print(f"YoY Growth Rate: {rate:.2f}%")
+9. Keep the script under 25 lines."""
 
 
 def clean_python_code(raw_code: str) -> str:
@@ -72,7 +73,7 @@ async def math_repl_node(state: AgentState) -> dict[str, Any]:
         f"Financial Context:\n{combined_context}"
     )
 
-    llm = get_llm(temperature=0.0)
+    llm = get_llm(temperature=0.0, max_tokens=600)
 
     try:
         messages = [
