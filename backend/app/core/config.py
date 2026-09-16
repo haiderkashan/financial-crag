@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     # LLM Provider Configuration
     LLM_PROVIDER: str = "groq"
-    LLM_MODEL_NAME: str = "llama-3.3-70b-versatile"
+    LLM_MODEL_NAME: str = "qwen/qwen3.8-27b"
     LLM_TEMPERATURE: float = 0.0
     GROQ_API_KEY: str = ""
     OPENAI_API_KEY: str = ""

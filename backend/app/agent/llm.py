@@ -14,7 +14,7 @@ def get_llm(
     """Factory function to initialize and return a configured BaseChatModel.
 
     Defaults to the provider and model defined in application settings
-    (default: Groq with llama-3.3-70b-versatile).
+    (default: Groq with qwen/qwen3.8-27b).
 
     Args:
         temperature: Sampling temperature for deterministic generation (default: 0.0).

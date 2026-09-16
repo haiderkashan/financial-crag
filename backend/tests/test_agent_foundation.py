@@ -41,7 +41,7 @@ def test_get_llm_success_with_key():
     """Verify get_llm successfully instantiates ChatGroq."""
     llm = get_llm(api_key="gsk_mock_test_key", temperature=0.2)
     assert isinstance(llm, ChatGroq)
-    assert llm.model_name == "llama-3.3-70b-versatile"
+    assert llm.model_name == "qwen/qwen3.8-27b"
     assert llm.temperature == pytest.approx(0.2)
 
 
