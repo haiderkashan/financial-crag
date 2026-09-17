@@ -68,10 +68,13 @@ async def request_magic_link(
     # Dispatch email with raw unhashed token
     await e_service.send_magic_link_email(email=user.email, token=raw_token)
 
-    return {
+    resp = {
         "status": "success",
         "message": "If the email is valid, an authentication link has been dispatched.",
     }
+    if settings.SMTP_DEV_MODE:
+        resp["dev_token"] = raw_token
+    return resp
 
 
 @router.post(
