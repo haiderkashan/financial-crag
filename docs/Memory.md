@@ -191,7 +191,7 @@ SEC EDGAR API → Download 10-K → LlamaParse (PDF→Markdown) → Structure-Aw
   - [x] Sub-Phase 3.6: Integration Tests & End-to-End Verification ✓
 - [ ] **Phase 4: API & Streaming Integration** — IN PROGRESS
   - [x] Sub-Phase 4.1: TypeScript Types & SSE Stream Client ✓
-  - [ ] Sub-Phase 4.2: React State Management Hook (`useAgentStream`)
+  - [x] Sub-Phase 4.2: React State Management Hook (`useAgentStream`) ✓
   - [ ] Sub-Phase 4.3: Agent Dashboard Layout (Shell & Query Bar)
   - [ ] Sub-Phase 4.4: Thought Inspection Panel Component
   - [ ] Sub-Phase 4.5: Markdown Rendering & Synthesis Document
