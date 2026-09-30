@@ -29,3 +29,15 @@ export interface StreamCallbacks {
   onDone?: DoneCallback;
   onError?: ErrorCallback;
 }
+
+export type AgentStreamStatus = "idle" | "streaming" | "complete" | "error";
+
+export interface AgentStreamState {
+  status: AgentStreamStatus;
+  steps: AgentStepEvent[];
+  activeNode: string | null;
+  generation: string;
+  error: string | null;
+  elapsedMs: number;
+}
+
